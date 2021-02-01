@@ -1,0 +1,38 @@
+name: Expo Publish via Github Deployment Action
+author: Shayan Guha <shayanguha@gmail.com>
+description: Attach a deployment to a PR linking to the published app. Requires https://github.com/marketplace/actions/expo-github-action
+branding:
+  icon: terminal
+  color: gray-dark
+runs:
+  using: node12
+  main: build/index.js
+inputs:
+  target:
+    description: 'managed or bare'
+    required: true
+    default: 'managed'
+runs:
+  using: "composite"
+  steps:
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/} | tr [:upper:] [:lower:] | tr -cd '[a-z0-9]._-')"
+      id: extract_branch
+    - name: Start deployment
+      uses: bobheadxi/deployments@master
+      id: deployment
+      with:
+        step: start
+        token: ${{ github.token }}
+        env: ${{ steps.extract_branch.outputs.branch }}
+    - run: expo publish --target ${{ inputs.target }} --release-channel=${{ steps.extract_branch.outputs.branch }}
+    - name: Update deployment status
+      uses: bobheadxi/deployments@master
+      if: always()
+      with:
+        step: finish
+        token: ${{ secrets.GITHUB_TOKEN }}
+        status: ${{ job.status }}
+        deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+        env_url: https://expo.io/@instamenu/instamenu-mobile?release-channel=${{ steps.extract_branch.outputs.branch }}
