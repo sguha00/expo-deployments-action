@@ -4,9 +4,6 @@ description: Attach a deployment to a PR linking to the published app. Requires 
 branding:
   icon: terminal
   color: gray-dark
-runs:
-  using: node12
-  main: build/index.js
 inputs:
   target:
     description: 'managed or bare'
